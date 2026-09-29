@@ -29,6 +29,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 public class FastKeyboardService extends InputMethodService {
     private static final int NAVY = Color.rgb(23,61,112);
@@ -48,6 +53,8 @@ public class FastKeyboardService extends InputMethodService {
     private LinearLayout currentRoot;
     private int keyboardColor=CREAM;
     private final Handler handler=new Handler();
+    private final Predictor predictor=new Predictor();
+    private final ArrayList<Button> suggestionButtons=new ArrayList<>();
 
     private static final String[] PERSIAN_NUMBERS={"۱","۲","۳","۴","۵","۶","۷","۸","۹","۰"};
     private static final String[] NUMBER_MARKS={"!","@","#","$","%","^","&","*","(",")"};
@@ -70,9 +77,10 @@ public class FastKeyboardService extends InputMethodService {
     private static final String[] FLAGS={"🇮🇷","🇺🇸","🇬🇧","🇨🇦","🇦🇺","🇩🇪","🇫🇷","🇮🇹","🇪🇸","🇵🇹","🇹🇷","🇷🇺","🇺🇦","🇨🇳","🇯🇵","🇰🇷","🇮🇳","🇵🇰","🇦🇫","🇮🇶","🇸🇦","🇦🇪","🇶🇦","🇰🇼","🇧🇭","🇴🇲","🇪🇬","🇯🇴","🇱🇧","🇸🇾","🇵🇸","🇬🇷","🇳🇱","🇧🇪","🇨🇭","🇦🇹","🇸🇪","🇳🇴","🇩🇰","🇫🇮","🇵🇱","🇨🇿","🇭🇺","🇷🇴","🇧🇬","🇷🇸","🇭🇷","🇦🇱","🇧🇦","🇬🇪","🇦🇲","🇦🇿","🇰🇿","🇺🇿","🇹🇯","🇹🇲","🇰🇬","🇳🇿","🇿🇦","🇳🇬","🇰🇪","🇲🇦","🇩🇿","🇹🇳","🇧🇷","🇦🇷","🇨🇱","🇨🇴","🇲🇽","🇺🇾","🇻🇪","🇵🇪","🇨🇺","🇯🇲","🇸🇬","🇲🇾","🇮🇩","🇹🇭","🇻🇳","🇵🇭"};
     private static final String[] SYMBOLS={"!","@","#","$","%","^","&","*","(",")","-","_","+","=","[","]","{","}","\\","|",";",":","'","\"",",",".","<",">","/","?","~","`","§","¶","©","®","™","€","£","¥","₽","₹","₺","₩","₴","₦","₱","₲","₵","₡","₫","฿","∞","≈","≠","≤","≥","±","×","÷","√","∑","∏","∆","∇","∂","∫","∮","π","µ","Ω","α","β","γ","δ","θ","λ","σ","φ","ψ","ω","←","↑","→","↓","↔","↕","↖","↗","↘","↙","⇐","⇑","⇒","⇓","↻","↺","✓","✔","✕","✖","✗","✘","★","☆","●","○","■","□","◆","◇","▲","△","▼","▽","♥","♡","♦","♢","♣","♤","♧","☀","☁","☂","☃","☄","☎","☑","☒","☐","⚠","⚡","⚙","⚓","⚽","♠","♣","♥","♦","♪","♫","†","‡","‰","′","″","↪","↩","⌂","⌘","⌫","⏎","␣","◀","▶","⏪","⏩","⏮","⏭","⏸","⏹","⏺","🔒","🔓","🔑","🔔","🔕","🔗","🗝️"};
 
-    @Override public void onCreate(){super.onCreate();prefs=getSharedPreferences("fkp2",Context.MODE_PRIVATE);loadHistory();keyboardColor=prefs.getInt("keyboardColor",CREAM);}
+    @Override public void onCreate(){super.onCreate();prefs=getSharedPreferences("fkp2",Context.MODE_PRIVATE);loadHistory();keyboardColor=prefs.getInt("keyboardColor",CREAM); predictor.loadBuiltIn(this); predictor.load(prefs);}
     @Override public View onCreateInputView(){return buildKeyboard();}
-    @Override public void onStartInputView(EditorInfo info,boolean restarting){super.onStartInputView(info,restarting);if(restarting)rebuild();}
+    @Override public void onStartInputView(EditorInfo info,boolean restarting){super.onStartInputView(info,restarting);if(restarting)rebuild(); updateSuggestions();}
+    @Override public void onUpdateSelection(int oldSelStart,int oldSelEnd,int newSelStart,int newSelEnd,int candidatesStart,int candidatesEnd){super.onUpdateSelection(oldSelStart,oldSelEnd,newSelStart,newSelEnd,candidatesStart,candidatesEnd);updateSuggestions();}
 
     private LinearLayout buildKeyboard(){
         LinearLayout root=new LinearLayout(this);currentRoot=root;root.setOrientation(LinearLayout.VERTICAL);root.setPadding(1,1,1,1);root.setBackgroundColor(keyboardColor);root.setLayoutParams(new ViewGroup.LayoutParams(-1,-1));
@@ -82,14 +90,14 @@ public class FastKeyboardService extends InputMethodService {
         String[] icons={"⧉","▣","▣","✂","↶","↷","▤","⚙","➤","↕"};
         for(int i=0;i<labels.length;i++){Button b=keyWithIcon(labels[i],icons[i],12,NAVY,CREAM);tools.addView(b,weight(1));final int n=i;switch(n){case 0:b.setOnClickListener(v->copyAll());break;case 1:b.setOnClickListener(v->copyAll());break;case 2:b.setOnClickListener(v->paste());break;case 3:b.setOnClickListener(v->cut());break;case 4:b.setOnClickListener(v->ctrlKey(KeyEvent.KEYCODE_Z));break;case 5:b.setOnClickListener(v->ctrlKey(KeyEvent.KEYCODE_Y));break;case 6:b.setOnClickListener(v->showHistory(v));break;case 7:b.setOnClickListener(v->showTools(v));break;case 8:b.setOnClickListener(v->sendKey(KeyEvent.KEYCODE_DPAD_RIGHT));break;default:b.setOnClickListener(v->toggleResize());}}
         root.addView(tools);
-        LinearLayout suggestions=row(.62f);for(String s:new String[]{"سلام","سلامت","سلامتی","من","مهم","منطقه",""}){Button b=key(s,14,NAVY,CREAM);suggestions.addView(b,weight(1));if(!s.isEmpty())b.setOnClickListener(v->commit(((Button)v).getText().toString()));}root.addView(suggestions);
+        LinearLayout suggestions=row(.62f); suggestionButtons.clear(); for(int i=0;i<7;i++){Button b=key("",14,NAVY,CREAM); suggestions.addView(b,weight(1)); suggestionButtons.add(b); final int idx=i; b.setOnClickListener(v->{String text=((Button)v).getText().toString(); if(!text.isEmpty()) applySuggestion(text);});} root.addView(suggestions); root.post(this::updateSuggestions);
         LinearLayout nums=row(1f);String[] numsText=english?new String[]{"1","2","3","4","5","6","7","8","9","0"}:PERSIAN_NUMBERS;for(int i=0;i<10;i++){Button b=dualKey(numsText[i],NUMBER_MARKS[i],19,BROWN,RED,CREAM);nums.addView(b,weight(1));b.setOnClickListener(v->commit(((Button)v).getTag().toString()));addMarkRepeat(b,NUMBER_MARKS[i]);}Button back=key("⌫",22,NAVY,PINK);nums.addView(back,weight(1.45f));addBackspaceRepeat(back);root.addView(nums);
         LinearLayout letters=new LinearLayout(this);letters.setOrientation(LinearLayout.HORIZONTAL);letters.setLayoutParams(new LinearLayout.LayoutParams(-1,0,2f));
         LinearLayout letterRows=new LinearLayout(this);letterRows.setOrientation(LinearLayout.VERTICAL);letterRows.setLayoutParams(new LinearLayout.LayoutParams(0,-1,11f));
         addLetterRow(letterRows,english?EN_R1:PERSIAN_R1,english?EN_MARKS_R1:PERSIAN_MARKS_R1);addLetterRow(letterRows,english?EN_R2:PERSIAN_R2,english?EN_MARKS_R2:PERSIAN_MARKS_R2);
         letters.addView(letterRows);Button enter=key("Enter",16,NAVY,Color.rgb(214,232,255));letters.addView(enter,new LinearLayout.LayoutParams(0,-1,1.2f));enter.setOnClickListener(v->sendKey(KeyEvent.KEYCODE_ENTER));root.addView(letters);
         LinearLayout third=row(1f);Button capsB=key(capsLocked?"Caps 🔒":"Caps",16,NAVY,caps?YELLOW:CREAM);third.addView(capsB,weight(1.2f));capsB.setOnClickListener(v->{long now=android.os.SystemClock.uptimeMillis();if(now-lastCapsTap<320){capsLocked=!capsLocked;caps=capsLocked;lastCapsTap=0;}else{caps=!caps;lastCapsTap=now;}rebuild();});String[] r3=english?EN_R3:PERSIAN_R3;for(int i=0;i<r3.length;i++){String s=caps?r3[i].toUpperCase():r3[i];String mark=(english?EN_MARKS_R3:PERSIAN_MARKS_R1)[i%11];Button b=dualKey(s,mark,20,NAVY,RED,CREAM);b.setOnClickListener(v->commit(((Button)v).getTag().toString()));addMarkRepeat(b,mark);third.addView(b,weight(1));}Button qmark=key("؟",20,RED,CREAM);third.addView(qmark,weight(1));qmark.setOnClickListener(v->commit("؟"));root.addView(third);
-        LinearLayout bottom=row(1.08f);Button emoji=keyWithIcon("اموجی","☺",14,NAVY,CREAM);Button sym=keyWithIcon("123\n!@...","⌘",13,NAVY,symbols?YELLOW:CREAM);Button globe=key(english?"🌐 EN":"🌐 FA",18,BLUE,CREAM);Button space=key("Space",19,NAVY,CREAM);Button comma=key(english?",":"،",23,RED,CREAM);Button question=key(".",23,RED,CREAM);Button pm=key("+\n−",18,RED,CREAM);Button left=key("←",23,BLUE,CREAM);Button right=key("→",23,BLUE,CREAM);Button up=key("↑",23,BLUE,CREAM);Button down=key("↓",23,BLUE,CREAM);bottom.addView(emoji,weight(.82f));bottom.addView(sym,weight(1.15f));bottom.addView(globe,weight(.9f));bottom.addView(space,weight(2.35f));bottom.addView(comma,weight(.72f));bottom.addView(question,weight(.72f));bottom.addView(pm,weight(.72f));bottom.addView(left,weight(.95f));bottom.addView(right,weight(.95f));bottom.addView(up,weight(.82f));bottom.addView(down,weight(.82f));emoji.setOnClickListener(v->showEmoji(v));sym.setOnClickListener(v->showSymbols(v));globe.setOnClickListener(v->{english=!english;symbols=false;rebuild();});space.setOnClickListener(v->commit(" "));comma.setOnClickListener(v->commit(((Button)v).getText().toString()));question.setOnClickListener(v->commit("."));pm.setOnClickListener(v->commit("±"));left.setOnClickListener(v->sendKey(KeyEvent.KEYCODE_DPAD_LEFT));right.setOnClickListener(v->sendKey(KeyEvent.KEYCODE_DPAD_RIGHT));up.setOnClickListener(v->sendKey(KeyEvent.KEYCODE_DPAD_UP));down.setOnClickListener(v->sendKey(KeyEvent.KEYCODE_DPAD_DOWN));root.addView(bottom);return root;
+        LinearLayout bottom=row(1.08f);Button emoji=keyWithIcon("اموجی","☺",14,NAVY,CREAM);Button sym=keyWithIcon("123\n!@...","⌘",13,NAVY,symbols?YELLOW:CREAM);Button globe=key(english?"🌐 EN":"🌐 FA",18,BLUE,CREAM);Button space=key("Space",19,NAVY,CREAM);Button comma=key(english?",":"،",23,RED,CREAM);Button question=key(".",23,RED,CREAM);Button pm=key("+\n−",18,RED,CREAM);Button left=key("←",23,BLUE,CREAM);Button right=key("→",23,BLUE,CREAM);Button up=key("↑",23,BLUE,CREAM);Button down=key("↓",23,BLUE,CREAM);bottom.addView(emoji,weight(.82f));bottom.addView(sym,weight(1.15f));bottom.addView(globe,weight(.9f));bottom.addView(space,weight(2.35f));bottom.addView(comma,weight(.72f));bottom.addView(question,weight(.72f));bottom.addView(pm,weight(.72f));bottom.addView(left,weight(.95f));bottom.addView(right,weight(.95f));bottom.addView(up,weight(.82f));bottom.addView(down,weight(.82f));emoji.setOnClickListener(v->showEmoji(v));sym.setOnClickListener(v->showSymbols(v));globe.setOnClickListener(v->{english=!english;symbols=false;rebuild();});space.setOnClickListener(v->commitSpaceAndLearn());comma.setOnClickListener(v->commit(((Button)v).getText().toString()));question.setOnClickListener(v->commit("."));pm.setOnClickListener(v->commit("±"));left.setOnClickListener(v->sendKey(KeyEvent.KEYCODE_DPAD_LEFT));right.setOnClickListener(v->sendKey(KeyEvent.KEYCODE_DPAD_RIGHT));up.setOnClickListener(v->sendKey(KeyEvent.KEYCODE_DPAD_UP));down.setOnClickListener(v->sendKey(KeyEvent.KEYCODE_DPAD_DOWN));root.addView(bottom);return root;
     }
 
     private void addLetterRow(LinearLayout parent,String[] letters,String[] marks){LinearLayout r=row(1f);for(int i=0;i<letters.length;i++){String s=caps?letters[i].toUpperCase():letters[i];Button b=dualKey(s,marks[i],22,NAVY,RED,CREAM);r.addView(b,weight(1));final String out=s;b.setOnClickListener(v->{commit(out);if(!capsLocked&&caps){caps=false;rebuild();}});if(!english&&s.equals("ا")){addAlifLongPress(b);}else{addMarkRepeat(b,marks[i]);}}parent.addView(r);}
@@ -121,6 +129,26 @@ public class FastKeyboardService extends InputMethodService {
     private LinearLayout row(float w){LinearLayout r=new LinearLayout(this);r.setOrientation(LinearLayout.HORIZONTAL);r.setGravity(Gravity.FILL);r.setPadding(0,0,0,0);r.setLayoutParams(new LinearLayout.LayoutParams(-1,0,w));return r;}
     private LinearLayout.LayoutParams weight(float w){LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,-1,w);p.setMargins(0,0,0,0);return p;}
     private GradientDrawable makeBg(int color){GradientDrawable gd=new GradientDrawable();gd.setColor(color);gd.setCornerRadius(8);gd.setStroke(1,Color.rgb(210,208,200));return gd;}
+    private void updateSuggestions(){
+        if(suggestionButtons.isEmpty()) return;
+        InputConnection ic=getCurrentInputConnection();
+        String before="";
+        if(ic!=null){ CharSequence cs=ic.getTextBeforeCursor(120,0); if(cs!=null) before=cs.toString(); }
+        List<String> list=predictor.suggest(before,7);
+        for(int i=0;i<suggestionButtons.size();i++){ Button b=suggestionButtons.get(i); if(i<list.size()){b.setText(list.get(i));b.setVisibility(View.VISIBLE);}else{b.setText("");b.setVisibility(View.INVISIBLE);} }
+    }
+    private void applySuggestion(String suggestion){
+        InputConnection ic=getCurrentInputConnection(); if(ic==null) return;
+        if(suggestion.equals("؟")||suggestion.equals("!")){ ic.commitText(suggestion+" ",1); predictor.observePunctuation(suggestion); updateSuggestions(); return; }
+        String out=(suggestion.startsWith(" ")?suggestion:" "+suggestion)+" ";
+        ic.commitText(out,1); predictor.observeWord(suggestion); updateSuggestions();
+    }
+    private void commitSpaceAndLearn(){
+        InputConnection ic=getCurrentInputConnection(); if(ic==null) return;
+        CharSequence cs=ic.getTextBeforeCursor(160,0); String before=cs==null?"":cs.toString();
+        predictor.learnFromContext(before); predictor.save(prefs); ic.commitText(" ",1); updateSuggestions();
+    }
+
     private void rebuild(){setInputView(buildKeyboard());}
     private void commit(String s){InputConnection ic=getCurrentInputConnection();if(ic!=null){ic.commitText(s,1);if(!s.equals(" "))addHistory(s);}}
     private void backspace(){InputConnection ic=getCurrentInputConnection();if(ic!=null)ic.deleteSurroundingText(1,0);}
@@ -147,5 +175,49 @@ private void showRepeatGridPopup(View anchor,String[] items,int cell,int height)
     private void addHistory(String s){if(TextUtils.isEmpty(s))return;history.add(s);while(history.size()>100)history.remove(0);prefs.edit().putString("history",TextUtils.join("\u0001",history)).apply();}
     private void loadHistory(){String all=prefs.getString("history","");if(!TextUtils.isEmpty(all))history.addAll(Arrays.asList(all.split("\u0001",-1)));while(history.size()>100)history.remove(0);}
     private int dp(int v){return Math.round(v*getResources().getDisplayMetrics().density);}
+    private static class Predictor {
+        private final Map<String,Map<String,Integer>> next=new HashMap<>();
+        private final Map<String,Integer> common=new LinkedHashMap<>();
+        Predictor(){
+            seed("شب","و",60); seed("شب","روز",45); seed("شب","خوب",30);
+            seed("کتاب","را",45); seed("کتاب","خواندم",35); seed("کتاب","خوبی",18);
+            seed("صبح","بخیر",55); seed("صبح","امروز",25); seed("امروز","روز",40); seed("امروز","هوا",30);
+            seed("هوا","خوب",50); seed("هوا","سرد",28); seed("حال","شما",45); seed("حال","خوب",40);
+            seed("چه","خبر",30); seed("چه","کار",28); seed("کجا","هستید",35); seed("چرا","این",25);
+            seed("آیا","شما",45); seed("من","به",30); seed("من","می",28); seed("ما","به",32);
+        }
+        void seed(String a,String b,int n){next.computeIfAbsent(a,k->new HashMap<>()).put(b,n);}
+        void loadBuiltIn(Context context){
+            try(BufferedReader br=new BufferedReader(new InputStreamReader(context.getAssets().open("suggestions_fa.txt"),"UTF-8"))){
+                String w;
+                while((w=br.readLine())!=null){
+                    w=w.trim();
+                    if(!w.isEmpty()) common.putIfAbsent(w,1);
+                }
+            }catch(Exception ignored){}
+        }
+        void observeWord(String w){ common.put(w,common.getOrDefault(w,0)+1); }
+        void observePunctuation(String p){}
+        void learnFromContext(String text){
+            String clean=text.replaceAll("[،,؛;:!?؟\\\"()\\[\\]{}]"," ").trim(); if(clean.isEmpty()) return;
+            String[] ws=clean.split("\\s+"); if(ws.length>=2){String a=ws[ws.length-2], b=ws[ws.length-1]; seed(a,b,next.getOrDefault(a,new HashMap<>()).getOrDefault(b,0)+1);} if(ws.length>=1) observeWord(ws[ws.length-1]);
+        }
+        List<String> suggest(String before,int max){
+            ArrayList<String> out=new ArrayList<>(); String context=before==null?"":before.trim();
+            String last=lastWord(context); Map<String,Integer> m=next.get(last);
+            if(m!=null) addSorted(out,m);
+            if(out.size()<max){ ArrayList<Map.Entry<String,Integer>> c=new ArrayList<>(common.entrySet()); c.sort((x,y)->Integer.compare(y.getValue(),x.getValue())); for(Map.Entry<String,Integer> e:c) if(!out.contains(e.getKey())) out.add(e.getKey()); }
+            if(looksQuestion(context) && out.size()<max) out.add("؟"); else if(looksExclamation(context) && out.size()<max) out.add("!");
+            if(out.size()<max && context.endsWith(" ")){ String[] fallback={"و","در","برای","که","از","با"}; for(String x:fallback) if(!out.contains(x)&&out.size()<max) out.add(x); }
+            return out.subList(0,Math.min(max,out.size()));
+        }
+        private void addSorted(List<String> out,Map<String,Integer> m){ArrayList<Map.Entry<String,Integer>> a=new ArrayList<>(m.entrySet());a.sort((x,y)->Integer.compare(y.getValue(),x.getValue()));for(Map.Entry<String,Integer> e:a)if(!out.contains(e.getKey()))out.add(e.getKey());}
+        private String lastWord(String s){String x=s.trim(); if(x.isEmpty())return ""; int i=x.length()-1; while(i>=0 && !Character.isLetter(x.charAt(i)) && x.charAt(i)!='ی' && x.charAt(i)!='ا')i--; int end=i+1; while(i>=0 && (Character.isLetter(x.charAt(i))||x.charAt(i)>=0x0600&&x.charAt(i)<=0x06FF))i--; return x.substring(i+1,end);}
+        private boolean looksQuestion(String s){String x=s.trim(); return x.matches(".*(آیا|چرا|چطور|چگونه|کجا|کی|چه|مگر|میشود|می‌شود|هستید|هستی)\\s*$");}
+        private boolean looksExclamation(String s){String x=s.trim(); return x.matches(".*(عالی|وای|عجب|چه خوب|تبریک|آفرین|خوشحال)\\s*$");}
+        void save(SharedPreferences p){StringBuilder sb=new StringBuilder();for(Map.Entry<String,Map<String,Integer>> e:next.entrySet())for(Map.Entry<String,Integer> q:e.getValue().entrySet())sb.append(e.getKey()).append('~').append(q.getKey()).append('~').append(q.getValue()).append('\\n');p.edit().putString("predictor",sb.toString()).apply();}
+        void load(SharedPreferences p){String raw=p.getString("predictor","");if(raw.isEmpty())return;for(String line:raw.split("\\n")){String[] z=line.split("~",-1);if(z.length==3)try{seed(z[0],z[1],Integer.parseInt(z[2]));}catch(Exception ignored){}}}
+    }
+
     private static class SimpleExpression{private final String s;private int p=0;SimpleExpression(String s){this.s=s.replace(" ","");}double parse(){double v=expr();if(p<s.length())throw new RuntimeException();return v;}double expr(){double v=term();while(p<s.length()){char c=s.charAt(p);if(c=='+'){p++;v+=term();}else if(c=='-'){p++;v-=term();}else break;}return v;}double term(){double v=factor();while(p<s.length()){char c=s.charAt(p);if(c=='*'){p++;v*=factor();}else if(c=='/'){p++;v/=factor();}else break;}return v;}double factor(){if(p<s.length()&&s.charAt(p)=='-'){p++;return -factor();}int st=p;while(p<s.length()&&(Character.isDigit(s.charAt(p))||s.charAt(p)=='.'))p++;if(st==p)throw new RuntimeException();return Double.parseDouble(s.substring(st,p));}}
 }
