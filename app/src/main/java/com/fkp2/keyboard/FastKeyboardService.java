@@ -215,7 +215,7 @@ private void showRepeatGridPopup(View anchor,String[] items,int cell,int height)
         private String lastWord(String s){String x=s.trim(); if(x.isEmpty())return ""; int i=x.length()-1; while(i>=0 && !Character.isLetter(x.charAt(i)) && x.charAt(i)!='ی' && x.charAt(i)!='ا')i--; int end=i+1; while(i>=0 && (Character.isLetter(x.charAt(i))||x.charAt(i)>=0x0600&&x.charAt(i)<=0x06FF))i--; return x.substring(i+1,end);}
         private boolean looksQuestion(String s){String x=s.trim(); return x.matches(".*(آیا|چرا|چطور|چگونه|کجا|کی|چه|مگر|میشود|می‌شود|هستید|هستی)\\s*$");}
         private boolean looksExclamation(String s){String x=s.trim(); return x.matches(".*(عالی|وای|عجب|چه خوب|تبریک|آفرین|خوشحال)\\s*$");}
-        void save(SharedPreferences p){StringBuilder sb=new StringBuilder();for(Map.Entry<String,Map<String,Integer>> e:next.entrySet())for(Map.Entry<String,Integer> q:e.getValue().entrySet())sb.append(e.getKey()).append('~').append(q.getKey()).append('~').append(q.getValue()).append('\\n');p.edit().putString("predictor",sb.toString()).apply();}
+        void save(SharedPreferences p){StringBuilder sb=new StringBuilder();for(Map.Entry<String,Map<String,Integer>> e:next.entrySet())for(Map.Entry<String,Integer> q:e.getValue().entrySet())sb.append(e.getKey()).append('~').append(q.getKey()).append('~').append(q.getValue()).append('\n');p.edit().putString("predictor",sb.toString()).apply();}
         void load(SharedPreferences p){String raw=p.getString("predictor","");if(raw.isEmpty())return;for(String line:raw.split("\\n")){String[] z=line.split("~",-1);if(z.length==3)try{seed(z[0],z[1],Integer.parseInt(z[2]));}catch(Exception ignored){}}}
     }
 
