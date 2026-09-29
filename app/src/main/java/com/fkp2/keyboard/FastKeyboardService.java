@@ -46,8 +46,9 @@ public class FastKeyboardService extends InputMethodService {
         return buildKeyboard();
     }
 
-    @Override public void onStartInputView(android.view.View view, android.view.inputmethod.EditorInfo info, boolean restarting) {
-        super.onStartInputView(view, info, restarting);
+    @Override public void onStartInputView(android.view.inputmethod.EditorInfo info, boolean restarting) {
+        super.onStartInputView(info, restarting);
+        View view = getInputView();
         if (view != null) view.post(view::requestLayout);
     }
 
