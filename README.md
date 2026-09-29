@@ -19,3 +19,14 @@
 
 ## مرجع طراحی
 چیدمان و قواعد پروژه باید مطابق سند مرجع Fast Keyboard باقی بماند و تغییرات بعدی فقط بر اساس درخواست صریح کاربر انجام شود.
+
+
+## Version 1.2
+- English/Persian keyboard toggle via Globe.
+- Enter key added.
+- Yellow flash across all keyboard keys on any key press.
+- Emoji collection expanded beyond 100 entries, with country flags and folder/file icons.
+- Symbol collection expanded beyond 100 entries.
+- Arabic marks moved into the امکانات drawer.
+- Simple calculator added to امکانات.
+- Keyboard appearance color tablet added to امکانات.
