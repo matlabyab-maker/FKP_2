@@ -128,11 +128,14 @@ public class FastKeyboardService extends InputMethodService {
         r.setOrientation(LinearLayout.HORIZONTAL);
         r.setGravity(Gravity.CENTER);
         r.setPadding(0,0,0,0);
+        r.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, hWeight));
         return r;
     }
 
     private LinearLayout.LayoutParams weight(float w) {
-        return new LinearLayout.LayoutParams(0, 0, w);
+        return new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.MATCH_PARENT, w);
     }
 
     private Button key(String text, float size, int fg, int bg) {
