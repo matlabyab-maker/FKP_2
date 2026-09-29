@@ -216,7 +216,7 @@ public class FastKeyboardService extends InputMethodService {
         PopupWindow pw=new PopupWindow(box,dp(320),dp(430),true);stylePopup(pw);pw.showAsDropDown(anchor,0,-dp(430));
     }
 
-    private void showHistory(View anchor){if(history.isEmpty()){showGridPopup(anchor,new String[]{"تاریخچه خالی است"},42,120);return;}List<String> items=new ArrayList<>(history);Collections.reverse(items);if(items.size()>100)items=items.subList(0,100);showGridPopup(anchor,items,42,360);}
+    private void showHistory(View anchor){if(history.isEmpty()){showGridPopup(anchor,new String[]{"تاریخچه خالی است"},42,120);return;}List<String> items=new ArrayList<>(history);Collections.reverse(items);if(items.size()>100)items=items.subList(0,100);showGridPopup(anchor,items.toArray(new String[0]),42,360);}
     private void addHistory(String s){if(TextUtils.isEmpty(s))return;history.add(s);while(history.size()>100)history.remove(0);prefs.edit().putString("history",TextUtils.join("\u0001",history)).apply();}
     private void loadHistory(){String all=prefs.getString("history","");if(!TextUtils.isEmpty(all))history.addAll(Arrays.asList(all.split("\u0001",-1)));while(history.size()>100)history.remove(0);}
     private int dp(int v){return Math.round(v*getResources().getDisplayMetrics().density);}
