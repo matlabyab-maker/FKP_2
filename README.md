@@ -82,3 +82,12 @@
 - اصطلاحات Git و GitHub: Repository، Branch، Clone، Fork، Commit، Push، Pull، Fetch، Merge، Rebase، Reset، Revert، Diff، Log، Tag، Stash، Cherry-pick، Pull Request، Issue، Review، Actions، Workflow، Runner، Job، Step، Artifact، Release، Projects، Discussions، Pages، Wiki، Security، Secrets، API و موارد دیگر.
 - اصطلاحات مربوط به MGit و منوی سه‌خط آن نیز به‌طور ویژه اضافه شده‌اند؛ از جمله Repository، Clone Repository، Init Repository، Commit Changes، Push Changes، Pull Changes، Fetch Changes، Merge، Branches، New Branch، Rename Branch، Delete Branch، Checkout Branch، Tag، Reset، Revert، Cherry Pick، Stash، Log، Diff، Changes، Files، Working Tree، Staging Area، Remote، Add/Edit/Remove Remote، Credentials، Authentication، SSH Key، Settings، Preferences، Help و موارد مرتبط.
 - این موارد به خود فایل واژه‌نامه اضافه شده‌اند تا در پیشنهادهای کیبورد قابل استفاده باشند، نه فقط در README.
+
+
+## نسخه 1.8 - اصلاح عملکرد دکمه‌ها
+- Caps: یک‌بار لمس برای حالت حروف بزرگ و دو لمس سریع برای Caps Lock.
+- امکانات: پنجره کشویی واقعی برای ابزارهای اضافی مانند اعراب عربی، ماشین حساب، رنگ، Emoji، نمادها و History.
+- حرف «ا»: با نگه‌داشتن، گونه‌های «ا، آ، أ، إ، ٱ، ؤ، ئ» در پنجره انتخاب نمایش داده می‌شوند و هر مورد قابل لمس است.
+- علائم و حرکات عربی: پنجره انتخاب با دکمه‌های قابل لمس و بدون تداخل لمس.
+- 100 History: تاریخچه برای متن‌های Copy/Cut/Paste ذخیره می‌شود و حداکثر 100 مورد را نگه می‌دارد.
+- پنجره‌های کشویی با موقعیت‌دهی پایدارتر در محیط Input Method نمایش داده می‌شوند.
