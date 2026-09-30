@@ -182,13 +182,24 @@ public class FastKeyboardService extends InputMethodService {
             else if(t[1].startsWith("بیش")) b.setOnClickListener(v->showRepeatGridPopup(v,SYMBOLS,42,300));
             else b.setOnClickListener(this::showHistory);
         }
-        activePopup=new PopupWindow(box,dp(300),dp(390),true);stylePopup(activePopup);showPopupAbove(anchor,activePopup,dp(390));
+        ScrollView toolScroll=new ScrollView(this);toolScroll.setFillViewport(true);toolScroll.addView(box,new ViewGroup.LayoutParams(-1,-2));
+        activePopup=new PopupWindow(toolScroll,dp(320),dp(430),true);stylePopup(activePopup);showPopupAbove(anchor,activePopup,dp(430));
     }
     private ScrollView scrollBox(){ScrollView sv=new ScrollView(this);sv.setFillViewport(true);LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(6,6,6,6);box.setBackgroundColor(CREAM);sv.addView(box,new ViewGroup.LayoutParams(-1,-1));return sv;}
     private LinearLayout gridContainer(ScrollView sv){return (LinearLayout)sv.getChildAt(0);}
-    private void addGrid(LinearLayout box,String[] items,int cell){LinearLayout r=null;int count=0;for(String item:items){if(count%7==0){r=new LinearLayout(this);r.setOrientation(LinearLayout.HORIZONTAL);box.addView(r,new LinearLayout.LayoutParams(-1,dp(cell)));}Button b=key(item,20,NAVY,CREAM);r.addView(b,weight(1));b.setOnClickListener(v->commit(((Button)v).getText().toString()));count++;}}
+    private String decodeSymbol(String value){
+        if(value==null)return "";
+        String s=value.trim();
+        try{
+            if(s.matches("(?i)U\\+[0-9A-F]{4,6}")) return new String(Character.toChars(Integer.parseInt(s.substring(2),16)));
+            if(s.matches("(?i)0x[0-9A-F]{4,6}")) return new String(Character.toChars(Integer.parseInt(s.substring(2),16)));
+            if(s.matches("\\u[0-9A-F]{4}")) return String.valueOf((char)Integer.parseInt(s.substring(2),16));
+        }catch(Exception ignored){}
+        return value;
+    }
+    private void addGrid(LinearLayout box,String[] items,int cell){LinearLayout r=null;int count=0;for(String item:items){if(count%7==0){r=new LinearLayout(this);r.setOrientation(LinearLayout.HORIZONTAL);box.addView(r,new LinearLayout.LayoutParams(-1,dp(cell)));}final String shown=decodeSymbol(item);Button b=key(shown,20,NAVY,CREAM);r.addView(b,weight(1));b.setOnClickListener(v->commit(decodeSymbol(((Button)v).getText().toString())));count++;}}
     private void showArabicMarks(View anchor){int[] loc=popupLocation(anchor);dismissPopup();ScrollView sv=scrollBox();LinearLayout box=gridContainer(sv);addGridCustom(box,ARABIC_MARKS,78,4,34);activePopup=new PopupWindow(sv,dp(330),dp(500),true);stylePopup(activePopup);showPopupAt(activePopup,loc[0],loc[1],500);}
-    private void addGridCustom(LinearLayout box,String[] items,int cell,int columns,float textSize){LinearLayout r=null;int count=0;for(String item:items){if(count%columns==0){r=new LinearLayout(this);r.setOrientation(LinearLayout.HORIZONTAL);box.addView(r,new LinearLayout.LayoutParams(-1,dp(cell)));}Button b=key(item,textSize,NAVY,CREAM);r.addView(b,weight(1));b.setOnClickListener(v->commit(((Button)v).getText().toString()));count++;}}
+    private void addGridCustom(LinearLayout box,String[] items,int cell,int columns,float textSize){LinearLayout r=null;int count=0;for(String item:items){if(count%columns==0){r=new LinearLayout(this);r.setOrientation(LinearLayout.HORIZONTAL);box.addView(r,new LinearLayout.LayoutParams(-1,dp(cell)));}final String shown=decodeSymbol(item);Button b=key(shown,textSize,NAVY,CREAM);r.addView(b,weight(1));b.setOnClickListener(v->commit(decodeSymbol(((Button)v).getText().toString())));count++;}}
     private void showGridPopup(View anchor,String[] items,int cell,int height){int[] loc=popupLocation(anchor);dismissPopup();ScrollView sv=scrollBox();addGrid(gridContainer(sv),items,cell);activePopup=new PopupWindow(sv,dp(330),dp(height),true);stylePopup(activePopup);showPopupAt(activePopup,loc[0],loc[1],height);}
     private void showRepeatGridPopup(View anchor,String[] items,int cell,int height){int[] loc=popupLocation(anchor);dismissPopup();ScrollView sv=scrollBox();addRepeatGrid(gridContainer(sv),items,cell);activePopup=new PopupWindow(sv,dp(330),dp(height),true);stylePopup(activePopup);showPopupAt(activePopup,loc[0],loc[1],height);}
     private void addRepeatGrid(LinearLayout box,String[] items,int cell){LinearLayout r=null;int count=0;for(String item:items){if(count%7==0){r=new LinearLayout(this);r.setOrientation(LinearLayout.HORIZONTAL);box.addView(r,new LinearLayout.LayoutParams(-1,dp(cell)));}Button b=key(item,20,NAVY,CREAM);r.addView(b,weight(1));b.setOnClickListener(v->commit(((Button)v).getText().toString()));addMarkRepeat(b,item);count++;}}
@@ -218,7 +229,11 @@ public class FastKeyboardService extends InputMethodService {
         }
         void seed(String a,String b,int n){next.computeIfAbsent(a,k->new HashMap<>()).put(b,n);}
         void loadBuiltIn(Context context){
-            try(BufferedReader br=new BufferedReader(new InputStreamReader(context.getAssets().open("suggestions_fa.txt"),"UTF-8"))){
+            loadDictionary(context,"suggestions_fa.txt");
+            loadDictionary(context,"suggestions_en.txt");
+        }
+        private void loadDictionary(Context context,String assetName){
+            try(BufferedReader br=new BufferedReader(new InputStreamReader(context.getAssets().open(assetName),"UTF-8"))){
                 String w;
                 while((w=br.readLine())!=null){
                     w=w.trim();
