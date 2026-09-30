@@ -91,3 +91,28 @@
 - علائم و حرکات عربی: پنجره انتخاب با دکمه‌های قابل لمس و بدون تداخل لمس.
 - 100 History: تاریخچه برای متن‌های Copy/Cut/Paste ذخیره می‌شود و حداکثر 100 مورد را نگه می‌دارد.
 - پنجره‌های کشویی با موقعیت‌دهی پایدارتر در محیط Input Method نمایش داده می‌شوند.
+
+
+## v1.9 changes
+- Suggestions now filter the current partially typed word instead of keeping unrelated fixed words.
+- Suggestion selection replaces the current partial word.
+- Suggestions refresh immediately after each committed character/word.
+- Arabic marks popup uses larger touch targets and larger text.
+- Keyboard color picker is vertically clamped so it remains visible.
+- Secondary symbols were removed from alphabet keys; alphabet keys show letters only.
+
+
+## v1.10 اصلاحات اخیر
+- پیشنهادها هنگام تایپ هر حرف به‌صورت لحظه‌ای بر اساس پیشوند کلمه فیلتر و مرتب می‌شوند.
+- پیشنهادهای نامربوط ثابت تا پایان کلمه نگه داشته نمی‌شوند.
+- پنجره انتخاب رنگ نسبت به بالای پنجره کیبورد جای‌گذاری می‌شود تا پایین صفحه پنهان نشود.
+- حرکات و علائم عربی با سلول‌ها و نوشته‌های بزرگ‌تر نمایش داده می‌شوند.
+- کلیدهای الفبایی فقط خود حرف را نشان می‌دهند و علامت همراه ندارند.
+
+
+## v1.11
+- نوار رول/SeekBar برای تغییر مستقیم اندازه کیبورد در پنجره «امکانات» اضافه شد.
+- Caps: یک لمس = حروف بزرگ موقت و بعد از تایپ یک حرف به حالت عادی برمی‌گردد؛ دو لمس سریع = Caps Lock ثابت؛ یک لمس دیگر = خروج از Caps Lock.
+
+
+Version 1.12 change: the number-row key 1 (۱ in Persian mode / 1 in English mode) was removed. No other main keyboard key was intentionally changed in this version.

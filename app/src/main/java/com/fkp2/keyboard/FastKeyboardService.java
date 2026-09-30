@@ -24,6 +24,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -97,11 +98,11 @@ public class FastKeyboardService extends InputMethodService {
         LinearLayout letterRows=new LinearLayout(this);letterRows.setOrientation(LinearLayout.VERTICAL);letterRows.setLayoutParams(new LinearLayout.LayoutParams(0,-1,11f));
         addLetterRow(letterRows,english?EN_R1:PERSIAN_R1,english?EN_MARKS_R1:PERSIAN_MARKS_R1);addLetterRow(letterRows,english?EN_R2:PERSIAN_R2,english?EN_MARKS_R2:PERSIAN_MARKS_R2);
         letters.addView(letterRows);Button enter=key("Enter",16,NAVY,Color.rgb(214,232,255));letters.addView(enter,new LinearLayout.LayoutParams(0,-1,1.2f));enter.setOnClickListener(v->sendKey(KeyEvent.KEYCODE_ENTER));root.addView(letters);
-        LinearLayout third=row(1f);Button capsB=key(capsLocked?"Caps 🔒":"Caps",16,NAVY,caps?YELLOW:CREAM);third.addView(capsB,weight(1.2f));capsB.setOnClickListener(v->{long now=android.os.SystemClock.uptimeMillis();if(now-lastCapsTap<450){capsLocked=!capsLocked;caps=capsLocked;lastCapsTap=0;}else{caps=!caps;lastCapsTap=now;}rebuild();});String[] r3=english?EN_R3:PERSIAN_R3;for(int i=0;i<r3.length;i++){String s=caps?r3[i].toUpperCase():r3[i];String mark=(english?EN_MARKS_R3:PERSIAN_MARKS_R1)[i%11];Button b=dualKey(s,mark,20,NAVY,RED,CREAM);b.setOnClickListener(v->commit(((Button)v).getTag().toString()));addMarkRepeat(b,mark);third.addView(b,weight(1));}Button qmark=key("؟",20,RED,CREAM);third.addView(qmark,weight(1));qmark.setOnClickListener(v->commit("؟"));root.addView(third);
+        LinearLayout third=row(1f);Button capsB=key(capsLocked?"Caps 🔒":"Caps",16,NAVY,caps?YELLOW:CREAM);third.addView(capsB,weight(1.2f));capsB.setOnClickListener(v->{long now=android.os.SystemClock.uptimeMillis();if(now-lastCapsTap<450){capsLocked=!capsLocked;caps=capsLocked;lastCapsTap=0;}else{caps=!caps;lastCapsTap=now;}rebuild();});String[] r3=english?EN_R3:PERSIAN_R3;for(int i=0;i<r3.length;i++){String s=caps?r3[i].toUpperCase():r3[i];String mark="";Button b=dualKey(s,mark,20,NAVY,RED,CREAM);b.setOnClickListener(v->commit(((Button)v).getTag().toString()));addMarkRepeat(b,mark);third.addView(b,weight(1));}Button qmark=key("؟",20,RED,CREAM);third.addView(qmark,weight(1));qmark.setOnClickListener(v->commit("؟"));root.addView(third);
         LinearLayout bottom=row(1.08f);Button emoji=keyWithIcon("اموجی","☺",14,NAVY,CREAM);Button sym=keyWithIcon("123\n!@...","⌘",13,NAVY,symbols?YELLOW:CREAM);Button globe=key(english?"🌐 EN":"🌐 FA",18,BLUE,CREAM);Button space=key("Space",19,NAVY,CREAM);Button comma=key(english?",":"،",23,RED,CREAM);Button question=key(".",23,RED,CREAM);Button pm=key("+\n−",18,RED,CREAM);Button left=key("←",23,BLUE,CREAM);Button right=key("→",23,BLUE,CREAM);Button up=key("↑",23,BLUE,CREAM);Button down=key("↓",23,BLUE,CREAM);bottom.addView(emoji,weight(.82f));bottom.addView(sym,weight(1.15f));bottom.addView(globe,weight(.9f));bottom.addView(space,weight(2.35f));bottom.addView(comma,weight(.72f));bottom.addView(question,weight(.72f));bottom.addView(pm,weight(.72f));bottom.addView(left,weight(.95f));bottom.addView(right,weight(.95f));bottom.addView(up,weight(.82f));bottom.addView(down,weight(.82f));emoji.setOnClickListener(v->showEmoji(v));sym.setOnClickListener(v->showSymbols(v));globe.setOnClickListener(v->{english=!english;symbols=false;rebuild();});space.setOnClickListener(v->commitSpaceAndLearn());comma.setOnClickListener(v->commit(((Button)v).getText().toString()));question.setOnClickListener(v->commit("."));pm.setOnClickListener(v->commit("±"));left.setOnClickListener(v->sendKey(KeyEvent.KEYCODE_DPAD_LEFT));right.setOnClickListener(v->sendKey(KeyEvent.KEYCODE_DPAD_RIGHT));up.setOnClickListener(v->sendKey(KeyEvent.KEYCODE_DPAD_UP));down.setOnClickListener(v->sendKey(KeyEvent.KEYCODE_DPAD_DOWN));root.addView(bottom);return root;
     }
 
-    private void addLetterRow(LinearLayout parent,String[] letters,String[] marks){LinearLayout r=row(1f);for(int i=0;i<letters.length;i++){String s=caps?letters[i].toUpperCase():letters[i];Button b=dualKey(s,marks[i],22,NAVY,RED,CREAM);r.addView(b,weight(1));final String out=s;b.setOnClickListener(v->{commit(out);if(!capsLocked&&caps){caps=false;rebuild();}});if(!english&&s.equals("ا")){addAlifLongPress(b);}else{addMarkRepeat(b,marks[i]);}}parent.addView(r);}
+    private void addLetterRow(LinearLayout parent,String[] letters,String[] marks){LinearLayout r=row(1f);for(int i=0;i<letters.length;i++){String s=caps?letters[i].toUpperCase():letters[i];Button b=key(s,22,NAVY,CREAM);r.addView(b,weight(1));final String out=s;b.setOnClickListener(v->{commit(out);if(!capsLocked&&caps){caps=false;rebuild();}});if(!english&&s.equals("ا")){addAlifLongPress(b);}else{}}parent.addView(r);}
     private Button dualKey(String main,String mark,float size,int fg,int markColor,int bg){DualButton b=new DualButton(this);b.setMainMark(main,mark,size,fg,markColor);b.setAllCaps(false);b.setTypeface(Typeface.create("sans",Typeface.NORMAL));b.setPadding(0,0,0,0);b.setMinHeight(0);b.setMinWidth(0);b.setTag(main);b.setBackground(makeBg(bg));installHighlight(b);return b;}
     private static class DualButton extends Button {
         private String main="", mark=""; private float mainSize=20; private int mainColor=Color.BLACK, markColor=Color.RED;
@@ -134,24 +135,27 @@ public class FastKeyboardService extends InputMethodService {
         if(suggestionButtons.isEmpty()) return;
         InputConnection ic=getCurrentInputConnection();
         String before="";
-        if(ic!=null){ CharSequence cs=ic.getTextBeforeCursor(120,0); if(cs!=null) before=cs.toString(); }
+        if(ic!=null){ CharSequence cs=ic.getTextBeforeCursor(160,0); if(cs!=null) before=cs.toString(); }
         List<String> list=predictor.suggest(before,7);
         for(int i=0;i<suggestionButtons.size();i++){ Button b=suggestionButtons.get(i); if(i<list.size()){b.setText(list.get(i));b.setVisibility(View.VISIBLE);}else{b.setText("");b.setVisibility(View.INVISIBLE);} }
     }
     private void applySuggestion(String suggestion){
         InputConnection ic=getCurrentInputConnection(); if(ic==null) return;
         if(suggestion.equals("؟")||suggestion.equals("!")){ ic.commitText(suggestion+" ",1); predictor.observePunctuation(suggestion); updateSuggestions(); return; }
-        String out=(suggestion.startsWith(" ")?suggestion:" "+suggestion)+" ";
-        ic.commitText(out,1); predictor.observeWord(suggestion); updateSuggestions();
+        CharSequence cs=ic.getTextBeforeCursor(80,0); String before=cs==null?"":cs.toString();
+        String prefix=predictor.lastWord(before);
+        if(!prefix.isEmpty() && !before.isEmpty() && !Character.isWhitespace(before.charAt(before.length()-1)) && predictor.normalize(suggestion).startsWith(predictor.normalize(prefix))){ ic.deleteSurroundingText(prefix.length(),0); ic.commitText(suggestion+" ",1); }
+        else { ic.commitText((before.endsWith(" ")?"":" ")+suggestion+" ",1); }
+        predictor.observeWord(suggestion); predictor.save(prefs); handler.post(this::updateSuggestions);
     }
     private void commitSpaceAndLearn(){
         InputConnection ic=getCurrentInputConnection(); if(ic==null) return;
         CharSequence cs=ic.getTextBeforeCursor(160,0); String before=cs==null?"":cs.toString();
-        predictor.learnFromContext(before); predictor.save(prefs); ic.commitText(" ",1); updateSuggestions();
+        predictor.learnFromContext(before); predictor.save(prefs); ic.commitText(" ",1); handler.post(this::updateSuggestions);
     }
 
     private void rebuild(){setInputView(buildKeyboard());}
-    private void commit(String s){InputConnection ic=getCurrentInputConnection();if(ic!=null)ic.commitText(s,1);}
+    private void commit(String s){InputConnection ic=getCurrentInputConnection();if(ic!=null){ic.commitText(s,1);handler.post(this::updateSuggestions);}}
     private void backspace(){InputConnection ic=getCurrentInputConnection();if(ic!=null)ic.deleteSurroundingText(1,0);}
     private void sendKey(int code){InputConnection ic=getCurrentInputConnection();if(ic!=null){ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN,code));ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP,code));}}
     private void ctrlKey(int code){InputConnection ic=getCurrentInputConnection();if(ic!=null){ic.sendKeyEvent(new KeyEvent(0,0,KeyEvent.ACTION_DOWN,code,0,KeyEvent.META_CTRL_ON));ic.sendKeyEvent(new KeyEvent(0,0,KeyEvent.ACTION_UP,code,0,KeyEvent.META_CTRL_ON));}}
@@ -164,32 +168,39 @@ public class FastKeyboardService extends InputMethodService {
     private void showTools(View anchor){
         dismissPopup();
         LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(6,6,6,6);box.setBackgroundColor(CREAM);
+        TextView resizeTitle=new TextView(this);resizeTitle.setText("اندازه کیبورد");resizeTitle.setTextSize(15);resizeTitle.setTextColor(NAVY);resizeTitle.setGravity(Gravity.CENTER);box.addView(resizeTitle,new LinearLayout.LayoutParams(-1,dp(32)));
+        SeekBar resizeRoller=new SeekBar(this);resizeRoller.setMax(260);int currentH=normalWindowHeight>0?normalWindowHeight:dp(360);int minH=dp(160);int maxH=dp(420);int progress=Math.max(0,Math.min(260,(int)(((float)(currentH-minH)/(maxH-minH))*260)));resizeRoller.setProgress(progress);box.addView(resizeRoller,new LinearLayout.LayoutParams(-1,dp(42)));
+        TextView resizeValue=new TextView(this);resizeValue.setText("ارتفاع: "+(currentH/dp(1)));resizeValue.setTextSize(13);resizeValue.setGravity(Gravity.CENTER);box.addView(resizeValue,new LinearLayout.LayoutParams(-1,dp(26)));
+        resizeRoller.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){public void onProgressChanged(SeekBar bar,int value,boolean fromUser){int h=minH+(int)(((maxH-minH)*value)/260f);resizeValue.setText("ارتفاع: "+(h/dp(1)));if(fromUser){resizeLevel=0;normalWindowHeight=h;getWindow().getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,h);}}public void onStartTrackingTouch(SeekBar bar){}public void onStopTrackingTouch(SeekBar bar){int h=minH+(int)(((maxH-minH)*bar.getProgress())/260f);normalWindowHeight=h;prefs.edit().putInt("normalWindowHeight",h).apply();}});
         String[][] tools={{"⚙","اعراب و علائم عربی"},{"▦","ماشین حساب"},{"🎨","رنگ نمای کیبورد"},{"☺","اموجی و پرچم‌ها"},{"#","بیش از 100 علامت"},{"▤","100 History"}};
         for(String[] t:tools){
             Button b=keyWithIcon(t[1],t[0],14,NAVY,CREAM);box.addView(b,new LinearLayout.LayoutParams(-1,dp(48)));
-            if(t[1].startsWith("اعراب")) b.setOnClickListener(v->showGridPopup(v,ARABIC_MARKS,44,240));
+            if(t[1].startsWith("اعراب")) b.setOnClickListener(v->showArabicMarks(v));
             else if(t[1].equals("ماشین حساب")) b.setOnClickListener(this::showCalculator);
             else if(t[1].startsWith("رنگ")) b.setOnClickListener(this::showColorTablet);
             else if(t[1].startsWith("اموجی")) b.setOnClickListener(this::showEmoji);
             else if(t[1].startsWith("بیش")) b.setOnClickListener(v->showRepeatGridPopup(v,SYMBOLS,42,300));
             else b.setOnClickListener(this::showHistory);
         }
-        activePopup=new PopupWindow(box,dp(300),dp(310),true);stylePopup(activePopup);showPopupAbove(anchor,activePopup,dp(310));
+        activePopup=new PopupWindow(box,dp(300),dp(390),true);stylePopup(activePopup);showPopupAbove(anchor,activePopup,dp(390));
     }
     private ScrollView scrollBox(){ScrollView sv=new ScrollView(this);sv.setFillViewport(true);LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(6,6,6,6);box.setBackgroundColor(CREAM);sv.addView(box,new ViewGroup.LayoutParams(-1,-1));return sv;}
     private LinearLayout gridContainer(ScrollView sv){return (LinearLayout)sv.getChildAt(0);}
     private void addGrid(LinearLayout box,String[] items,int cell){LinearLayout r=null;int count=0;for(String item:items){if(count%7==0){r=new LinearLayout(this);r.setOrientation(LinearLayout.HORIZONTAL);box.addView(r,new LinearLayout.LayoutParams(-1,dp(cell)));}Button b=key(item,20,NAVY,CREAM);r.addView(b,weight(1));b.setOnClickListener(v->commit(((Button)v).getText().toString()));count++;}}
+    private void showArabicMarks(View anchor){int[] loc=popupLocation(anchor);dismissPopup();ScrollView sv=scrollBox();LinearLayout box=gridContainer(sv);addGridCustom(box,ARABIC_MARKS,78,4,34);activePopup=new PopupWindow(sv,dp(330),dp(500),true);stylePopup(activePopup);showPopupAt(activePopup,loc[0],loc[1],500);}
+    private void addGridCustom(LinearLayout box,String[] items,int cell,int columns,float textSize){LinearLayout r=null;int count=0;for(String item:items){if(count%columns==0){r=new LinearLayout(this);r.setOrientation(LinearLayout.HORIZONTAL);box.addView(r,new LinearLayout.LayoutParams(-1,dp(cell)));}Button b=key(item,textSize,NAVY,CREAM);r.addView(b,weight(1));b.setOnClickListener(v->commit(((Button)v).getText().toString()));count++;}}
     private void showGridPopup(View anchor,String[] items,int cell,int height){int[] loc=popupLocation(anchor);dismissPopup();ScrollView sv=scrollBox();addGrid(gridContainer(sv),items,cell);activePopup=new PopupWindow(sv,dp(330),dp(height),true);stylePopup(activePopup);showPopupAt(activePopup,loc[0],loc[1],height);}
     private void showRepeatGridPopup(View anchor,String[] items,int cell,int height){int[] loc=popupLocation(anchor);dismissPopup();ScrollView sv=scrollBox();addRepeatGrid(gridContainer(sv),items,cell);activePopup=new PopupWindow(sv,dp(330),dp(height),true);stylePopup(activePopup);showPopupAt(activePopup,loc[0],loc[1],height);}
     private void addRepeatGrid(LinearLayout box,String[] items,int cell){LinearLayout r=null;int count=0;for(String item:items){if(count%7==0){r=new LinearLayout(this);r.setOrientation(LinearLayout.HORIZONTAL);box.addView(r,new LinearLayout.LayoutParams(-1,dp(cell)));}Button b=key(item,20,NAVY,CREAM);r.addView(b,weight(1));b.setOnClickListener(v->commit(((Button)v).getText().toString()));addMarkRepeat(b,item);count++;}}
     private void stylePopup(PopupWindow pw){pw.setBackgroundDrawable(new ColorDrawable(CREAM));pw.setOutsideTouchable(true);pw.setFocusable(true);pw.setInputMethodMode(PopupWindow.INPUT_METHOD_NOT_NEEDED);pw.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);pw.setElevation(dp(8));pw.setTouchInterceptor((v,e)->false);}
     private int[] popupLocation(View anchor){int[] loc=new int[2];anchor.getLocationOnScreen(loc);return loc;}
     private void showPopupAbove(View anchor,PopupWindow pw,int height){int[] loc=popupLocation(anchor);showPopupAt(pw,loc[0],loc[1],height);}
-    private void showPopupAt(PopupWindow pw,int x,int anchorY,int height){int y=Math.max(0,anchorY-dp(height));if(currentRoot!=null)pw.showAtLocation(currentRoot,Gravity.TOP|Gravity.LEFT,x,y);else pw.showAsDropDown(currentRoot,0,-dp(height));}
+    private void showPopupAt(PopupWindow pw,int x,int anchorY,int height){int h=dp(height);int screenH=getResources().getDisplayMetrics().heightPixels;int y=anchorY-h;if(y<dp(4))y=dp(4);if(y+h>screenH-dp(4))y=Math.max(dp(4),screenH-h-dp(4));if(currentRoot!=null)pw.showAtLocation(currentRoot,Gravity.TOP|Gravity.LEFT,Math.max(0,x),y);else pw.showAsDropDown(currentRoot,0,-h);}
+    private void showPopupAtKeyboardTop(PopupWindow pw,int height){int h=dp(height);int[] rootLoc=new int[2];if(currentRoot!=null){currentRoot.getLocationOnScreen(rootLoc);int y=rootLoc[1]-h-dp(4);if(y<dp(4))y=dp(4);int screenW=getResources().getDisplayMetrics().widthPixels;int w=dp(320);int x=Math.max(0,(screenW-w)/2);pw.showAtLocation(currentRoot,Gravity.TOP|Gravity.LEFT,x,y);}else{pw.showAtLocation(getWindow().getDecorView(),Gravity.TOP|Gravity.CENTER_HORIZONTAL,0,dp(4));}}
     private void dismissPopup(){if(activePopup!=null&&activePopup.isShowing())activePopup.dismiss();activePopup=null;}
     private void showCalculator(View anchor){LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(8,8,8,8);box.setBackgroundColor(CREAM);TextView display=new TextView(this);display.setText("0");display.setTextSize(24);display.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);box.addView(display,new LinearLayout.LayoutParams(-1,dp(55)));String[] ks={"7","8","9","÷","4","5","6","×","1","2","3","−","0",".","=","+","C"};for(int i=0;i<ks.length;i+=4){LinearLayout r=new LinearLayout(this);for(int j=i;j<Math.min(i+4,ks.length);j++){String k=ks[j];Button b=key(k,18,NAVY,CREAM);r.addView(b,weight(1));b.setOnClickListener(v->{String old=display.getText().toString();String x=((Button)v).getText().toString();if(x.equals("C"))display.setText("0");else if(x.equals("="))display.setText(calculate(old));else display.setText(old.equals("0")?x:old+x);});}box.addView(r,new LinearLayout.LayoutParams(-1,dp(48)));}int[] loc=popupLocation(anchor);dismissPopup();activePopup=new PopupWindow(box,dp(280),dp(360),true);stylePopup(activePopup);showPopupAt(activePopup,loc[0],loc[1],360);}
     private String calculate(String s){try{String e=s.replace("×","*").replace("÷","/").replace("−","-");double v=new SimpleExpression(e).parse();return v==(long)v?Long.toString((long)v):Double.toString(v);}catch(Exception e){return "Error";}}
-    private void showColorTablet(View anchor){LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(8,8,8,8);box.setBackgroundColor(CREAM);TextView title=new TextView(this);title.setText("انتخاب رنگ نمای کیبورد");title.setGravity(Gravity.CENTER);title.setTextSize(16);box.addView(title,new LinearLayout.LayoutParams(-1,dp(42)));int[] colors={0xFFFFFBF0,0xFFFFFFFF,0xFFFFF2CC,0xFFFFE4C4,0xFFFFD6D6,0xFFFFE0F0,0xFFE8D9FF,0xFFD9E8FF,0xFFD8F0FF,0xFFD8F5E5,0xFFE7F5D8,0xFFF5F5DC,0xFFE0E0E0,0xFFC8C8C8,0xFFB0BEC5,0xFF263238,0xFF102A43,0xFF1B4965,0xFF5C3D2E,0xFF6D597A,0xFF8D6E63,0xFF455A64,0xFF2E7D32,0xFF1565C0,0xFF6A1B9A,0xFFC62828,0xFFEF6C00,0xFFFFC107,0xFF00838F,0xFF00695C,0xFFAD1457,0xFF4E342E,0xFF37474F,0xFF1A237E,0xFF311B92,0xFF004D40,0xFF33691E,0xFF827717,0xFF3E2723,0xFF000000};for(int i=0;i<colors.length;i+=5){LinearLayout r=new LinearLayout(this);for(int j=i;j<Math.min(i+5,colors.length);j++){final int c=colors[j];Button sw=key("",1,NAVY,c);r.addView(sw,weight(1));sw.setOnClickListener(v->{keyboardColor=c;prefs.edit().putInt("keyboardColor",c).apply();if(currentRoot!=null)currentRoot.setBackgroundColor(c);});}box.addView(r,new LinearLayout.LayoutParams(-1,dp(48)));}int[] loc=popupLocation(anchor);dismissPopup();activePopup=new PopupWindow(box,dp(320),dp(430),true);stylePopup(activePopup);showPopupAt(activePopup,loc[0],loc[1],430);}
+    private void showColorTablet(View anchor){LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(8,8,8,8);box.setBackgroundColor(CREAM);TextView title=new TextView(this);title.setText("انتخاب رنگ نمای کیبورد");title.setGravity(Gravity.CENTER);title.setTextSize(16);box.addView(title,new LinearLayout.LayoutParams(-1,dp(42)));int[] colors={0xFFFFFBF0,0xFFFFFFFF,0xFFFFF2CC,0xFFFFE4C4,0xFFFFD6D6,0xFFFFE0F0,0xFFE8D9FF,0xFFD9E8FF,0xFFD8F0FF,0xFFD8F5E5,0xFFE7F5D8,0xFFF5F5DC,0xFFE0E0E0,0xFFC8C8C8,0xFFB0BEC5,0xFF263238,0xFF102A43,0xFF1B4965,0xFF5C3D2E,0xFF6D597A,0xFF8D6E63,0xFF455A64,0xFF2E7D32,0xFF1565C0,0xFF6A1B9A,0xFFC62828,0xFFEF6C00,0xFFFFC107,0xFF00838F,0xFF00695C,0xFFAD1457,0xFF4E342E,0xFF37474F,0xFF1A237E,0xFF311B92,0xFF004D40,0xFF33691E,0xFF827717,0xFF3E2723,0xFF000000};for(int i=0;i<colors.length;i+=5){LinearLayout r=new LinearLayout(this);for(int j=i;j<Math.min(i+5,colors.length);j++){final int c=colors[j];Button sw=key("",1,NAVY,c);r.addView(sw,weight(1));sw.setOnClickListener(v->{keyboardColor=c;prefs.edit().putInt("keyboardColor",c).apply();if(currentRoot!=null)currentRoot.setBackgroundColor(c);});}box.addView(r,new LinearLayout.LayoutParams(-1,dp(48)));}dismissPopup();activePopup=new PopupWindow(box,dp(320),dp(395),true);stylePopup(activePopup);showPopupAtKeyboardTop(activePopup,395);}
     private void showHistory(View anchor){if(history.isEmpty()){showGridPopup(anchor,new String[]{"تاریخچه خالی است"},42,120);return;}List<String> items=new ArrayList<>(history);Collections.reverse(items);if(items.size()>100)items=items.subList(0,100);showGridPopup(anchor,items.toArray(new String[0]),42,360);}
     private void addHistory(String s){if(TextUtils.isEmpty(s))return;history.add(s);while(history.size()>100)history.remove(0);prefs.edit().putString("history",TextUtils.join("\u0001",history)).apply();}
     private void loadHistory(){String all=prefs.getString("history","");if(!TextUtils.isEmpty(all))history.addAll(Arrays.asList(all.split("\u0001",-1)));while(history.size()>100)history.remove(0);}
@@ -222,16 +233,49 @@ public class FastKeyboardService extends InputMethodService {
             String[] ws=clean.split("\\s+"); if(ws.length>=2){String a=ws[ws.length-2], b=ws[ws.length-1]; seed(a,b,next.getOrDefault(a,new HashMap<>()).getOrDefault(b,0)+1);} if(ws.length>=1) observeWord(ws[ws.length-1]);
         }
         List<String> suggest(String before,int max){
-            ArrayList<String> out=new ArrayList<>(); String context=before==null?"":before.trim();
-            String last=lastWord(context); Map<String,Integer> m=next.get(last);
+            ArrayList<String> out=new ArrayList<>();
+            String raw=before==null?"":before;
+            String normalized=normalize(raw);
+            String last=lastWord(normalized);
+            boolean partial=!normalized.isEmpty() && !Character.isWhitespace(normalized.charAt(normalized.length()-1)) && !last.isEmpty();
+            if(partial){
+                final String prefix=last;
+                ArrayList<Map.Entry<String,Integer>> c=new ArrayList<>(common.entrySet());
+                c.removeIf(e->{String w=normalize(e.getKey()); return w.length()<=prefix.length() || !w.startsWith(prefix);});
+                c.sort((x,y)->{
+                    String wx=normalize(x.getKey()), wy=normalize(y.getKey());
+                    int sx=prefixScore(wx,prefix,x.getValue()), sy=prefixScore(wy,prefix,y.getValue());
+                    int n=Integer.compare(sy,sx);
+                    return n!=0?n:Integer.compare(wx.length(),wy.length());
+                });
+                for(Map.Entry<String,Integer> e:c){String w=e.getKey();if(!out.contains(w))out.add(w);if(out.size()>=max)break;}
+                return out;
+            }
+            Map<String,Integer> m=next.get(last);
             if(m!=null) addSorted(out,m);
-            if(out.size()<max){ ArrayList<Map.Entry<String,Integer>> c=new ArrayList<>(common.entrySet()); c.sort((x,y)->Integer.compare(y.getValue(),x.getValue())); for(Map.Entry<String,Integer> e:c) if(!out.contains(e.getKey())) out.add(e.getKey()); }
-            if(looksQuestion(context) && out.size()<max) out.add("؟"); else if(looksExclamation(context) && out.size()<max) out.add("!");
-            if(out.size()<max && context.endsWith(" ")){ String[] fallback={"و","در","برای","که","از","با"}; for(String x:fallback) if(!out.contains(x)&&out.size()<max) out.add(x); }
+            if(looksQuestion(normalized) && out.size()<max) out.add("؟");
+            else if(looksExclamation(normalized) && out.size()<max) out.add("!");
+            // After a completed word, prefer context learned from that word; only then use general words.
+            if(out.size()<max){
+                ArrayList<Map.Entry<String,Integer>> c=new ArrayList<>(common.entrySet());
+                c.sort((x,y)->Integer.compare(y.getValue(),x.getValue()));
+                for(Map.Entry<String,Integer> e:c){if(!out.contains(e.getKey())){out.add(e.getKey());if(out.size()>=max)break;}}
+            }
             return out.subList(0,Math.min(max,out.size()));
         }
+        private int prefixScore(String word,String prefix,int freq){
+            int score=freq*4;
+            score += Math.max(0,120-(word.length()-prefix.length())*12);
+            if(word.equals(prefix)) score-=10000;
+            return score;
+        }
+        private String normalize(String s){
+            if(s==null)return "";
+            return s.replace("\u200c","").replace("\u200d","").replace("\u0640","").trim();
+        }
         private void addSorted(List<String> out,Map<String,Integer> m){ArrayList<Map.Entry<String,Integer>> a=new ArrayList<>(m.entrySet());a.sort((x,y)->Integer.compare(y.getValue(),x.getValue()));for(Map.Entry<String,Integer> e:a)if(!out.contains(e.getKey()))out.add(e.getKey());}
-        private String lastWord(String s){String x=s.trim(); if(x.isEmpty())return ""; int i=x.length()-1; while(i>=0 && !Character.isLetter(x.charAt(i)) && x.charAt(i)!='ی' && x.charAt(i)!='ا')i--; int end=i+1; while(i>=0 && (Character.isLetter(x.charAt(i))||x.charAt(i)>=0x0600&&x.charAt(i)<=0x06FF))i--; return x.substring(i+1,end);}
+        String lastWord(String s){String x=normalize(s);if(x.isEmpty())return "";int end=x.length();int i=end-1;while(i>=0&&!isWordChar(x.charAt(i)))i--;end=i+1;while(i>=0&&isWordChar(x.charAt(i)))i--;return x.substring(i+1,end);}
+        private boolean isWordChar(char c){return Character.isLetter(c)||(c>=0x0600&&c<=0x06FF);}
         private boolean looksQuestion(String s){String x=s.trim(); return x.matches(".*(آیا|چرا|چطور|چگونه|کجا|کی|چه|مگر|میشود|می‌شود|هستید|هستی)\\s*$");}
         private boolean looksExclamation(String s){String x=s.trim(); return x.matches(".*(عالی|وای|عجب|چه خوب|تبریک|آفرین|خوشحال)\\s*$");}
         void save(SharedPreferences p){StringBuilder sb=new StringBuilder();for(Map.Entry<String,Map<String,Integer>> e:next.entrySet())for(Map.Entry<String,Integer> q:e.getValue().entrySet())sb.append(e.getKey()).append('~').append(q.getKey()).append('~').append(q.getValue()).append('\n');p.edit().putString("predictor",sb.toString()).apply();}
