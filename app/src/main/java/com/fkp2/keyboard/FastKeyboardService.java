@@ -79,7 +79,7 @@ public class FastKeyboardService extends InputMethodService {
     private static final String[] FLAGS={"🇮🇷","🇺🇸","🇬🇧","🇨🇦","🇦🇺","🇩🇪","🇫🇷","🇮🇹","🇪🇸","🇵🇹","🇹🇷","🇷🇺","🇺🇦","🇨🇳","🇯🇵","🇰🇷","🇮🇳","🇵🇰","🇦🇫","🇮🇶","🇸🇦","🇦🇪","🇶🇦","🇰🇼","🇧🇭","🇴🇲","🇪🇬","🇯🇴","🇱🇧","🇸🇾","🇵🇸","🇬🇷","🇳🇱","🇧🇪","🇨🇭","🇦🇹","🇸🇪","🇳🇴","🇩🇰","🇫🇮","🇵🇱","🇨🇿","🇭🇺","🇷🇴","🇧🇬","🇷🇸","🇭🇷","🇦🇱","🇧🇦","🇬🇪","🇦🇲","🇦🇿","🇰🇿","🇺🇿","🇹🇯","🇹🇲","🇰🇬","🇳🇿","🇿🇦","🇳🇬","🇰🇪","🇲🇦","🇩🇿","🇹🇳","🇧🇷","🇦🇷","🇨🇱","🇨🇴","🇲🇽","🇺🇾","🇻🇪","🇵🇪","🇨🇺","🇯🇲","🇸🇬","🇲🇾","🇮🇩","🇹🇭","🇻🇳","🇵🇭"};
     private static final String[] SYMBOLS={"!","@","#","$","%","^","&","*","(",")","-","_","+","=","[","]","{","}","\\","|",";",":","'","\"",",",".","<",">","/","?","~","`","§","¶","©","®","™","€","£","¥","₽","₹","₺","₩","₴","₦","₱","₲","₵","₡","₫","฿","∞","≈","≠","≤","≥","±","×","÷","√","∑","∏","∆","∇","∂","∫","∮","π","µ","Ω","α","β","γ","δ","θ","λ","σ","φ","ψ","ω","←","↑","→","↓","↔","↕","↖","↗","↘","↙","⇐","⇑","⇒","⇓","↻","↺","✓","✔","✕","✖","✗","✘","★","☆","●","○","■","□","◆","◇","▲","△","▼","▽","♥","♡","♦","♢","♣","♤","♧","☀","☁","☂","☃","☄","☎","☑","☒","☐","⚠","⚡","⚙","⚓","⚽","♠","♣","♥","♦","♪","♫","†","‡","‰","′","″","↪","↩","⌂","⌘","⌫","⏎","␣","◀","▶","⏪","⏩","⏮","⏭","⏸","⏹","⏺","🔒","🔓","🔑","🔔","🔕","🔗","🗝️"};
 
-    @Override public void onCreate(){super.onCreate();prefs=getSharedPreferences("fkp2",Context.MODE_PRIVATE);loadHistory();keyboardColor=prefs.getInt("keyboardColor",CREAM); predictor.loadBuiltIn(this); predictor.load(prefs);}
+    @Override public void onCreate(){super.onCreate();prefs=getSharedPreferences("fkp2",Context.MODE_PRIVATE);loadHistory();keyboardColor=prefs.getInt("keyboardColor",CREAM); if(!prefs.getBoolean("suggestions_cleared_v15",false)){prefs.edit().remove("predictor").putBoolean("suggestions_cleared_v15",true).apply();} predictor.load(prefs);}
     @Override public View onCreateInputView(){return buildKeyboard();}
     @Override public void onStartInputView(EditorInfo info,boolean restarting){super.onStartInputView(info,restarting);if(restarting)rebuild(); updateSuggestions();}
     @Override public void onUpdateSelection(int oldSelStart,int oldSelEnd,int newSelStart,int newSelEnd,int candidatesStart,int candidatesEnd){super.onUpdateSelection(oldSelStart,oldSelEnd,newSelStart,newSelEnd,candidatesStart,candidatesEnd);updateSuggestions();}
@@ -127,7 +127,30 @@ public class FastKeyboardService extends InputMethodService {
     private void showSymbols(View anchor){symbols=true;showRepeatGridPopup(anchor,SYMBOLS,42,300);}
 
     private void addAlifLongPress(Button b){final boolean[] shown={false};final Runnable[] r={null};r[0]=()->{shown[0]=true;showAlifVariants(b);};b.setOnTouchListener((v,e)->{if(e.getAction()==MotionEvent.ACTION_DOWN){shown[0]=false;handler.postDelayed(r[0],450);b.setBackground(makeBg(YELLOW));return true;}if(e.getAction()==MotionEvent.ACTION_UP||e.getAction()==MotionEvent.ACTION_CANCEL){handler.removeCallbacks(r[0]);Object t=b.getTag();b.setBackground(makeBg(t instanceof Integer?(Integer)t:CREAM));if(!shown[0]){b.performClick();}return true;}return true;});}
-    private void showAlifVariants(View anchor){showGridPopup(anchor,ALIF_VARIANTS,52,150);}
+    private void showAlifVariants(View anchor){
+        int[] loc=popupLocation(anchor);
+        dismissPopup();
+        ScrollView sv=scrollBox();
+        LinearLayout box=gridContainer(sv);
+        addAlifGrid(box,ALIF_VARIANTS,52);
+        activePopup=new PopupWindow(sv,dp(330),dp(150),true);
+        stylePopup(activePopup);
+        showPopupAt(activePopup,loc[0],loc[1],150);
+    }
+    private void addAlifGrid(LinearLayout box,String[] items,int cell){
+        LinearLayout r=null; int count=0;
+        for(String item:items){
+            if(count%7==0){r=new LinearLayout(this);r.setOrientation(LinearLayout.HORIZONTAL);box.addView(r,new LinearLayout.LayoutParams(-1,dp(cell)));}
+            final String shown=decodeSymbol(item);
+            Button b=key(shown,24,NAVY,CREAM);
+            r.addView(b,weight(1));
+            b.setOnClickListener(v->{
+                commit(decodeSymbol(((Button)v).getText().toString()));
+                dismissPopup();
+            });
+            count++;
+        }
+    }
     private LinearLayout row(float w){LinearLayout r=new LinearLayout(this);r.setOrientation(LinearLayout.HORIZONTAL);r.setGravity(Gravity.FILL);r.setPadding(0,0,0,0);r.setLayoutParams(new LinearLayout.LayoutParams(-1,0,w));return r;}
     private LinearLayout.LayoutParams weight(float w){LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,-1,w);p.setMargins(0,0,0,0);return p;}
     private GradientDrawable makeBg(int color){GradientDrawable gd=new GradientDrawable();gd.setColor(color);gd.setCornerRadius(8);gd.setStroke(1,Color.rgb(210,208,200));return gd;}
@@ -193,7 +216,9 @@ public class FastKeyboardService extends InputMethodService {
         try{
             if(s.matches("(?i)U\\+[0-9A-F]{4,6}")) return new String(Character.toChars(Integer.parseInt(s.substring(2),16)));
             if(s.matches("(?i)0x[0-9A-F]{4,6}")) return new String(Character.toChars(Integer.parseInt(s.substring(2),16)));
-            if(s.matches("\\u[0-9A-F]{4}")) return String.valueOf((char)Integer.parseInt(s.substring(2),16));
+            if(s.length()==6 && s.charAt(0)==92 && (s.charAt(1)=='u' || s.charAt(1)=='U') && s.substring(2).matches("[0-9A-Fa-f]{4}")) return String.valueOf((char)Integer.parseInt(s.substring(2),16));
+            if(s.matches("(?i)&#x[0-9A-F]{2,6};")) return new String(Character.toChars(Integer.parseInt(s.substring(3,s.length()-1),16)));
+            if(s.matches("&#[0-9]{2,7};")) return new String(Character.toChars(Integer.parseInt(s.substring(2,s.length()-1))));
         }catch(Exception ignored){}
         return value;
     }
@@ -202,7 +227,7 @@ public class FastKeyboardService extends InputMethodService {
     private void addGridCustom(LinearLayout box,String[] items,int cell,int columns,float textSize){LinearLayout r=null;int count=0;for(String item:items){if(count%columns==0){r=new LinearLayout(this);r.setOrientation(LinearLayout.HORIZONTAL);box.addView(r,new LinearLayout.LayoutParams(-1,dp(cell)));}final String shown=decodeSymbol(item);Button b=key(shown,textSize,NAVY,CREAM);r.addView(b,weight(1));b.setOnClickListener(v->commit(decodeSymbol(((Button)v).getText().toString())));count++;}}
     private void showGridPopup(View anchor,String[] items,int cell,int height){int[] loc=popupLocation(anchor);dismissPopup();ScrollView sv=scrollBox();addGrid(gridContainer(sv),items,cell);activePopup=new PopupWindow(sv,dp(330),dp(height),true);stylePopup(activePopup);showPopupAt(activePopup,loc[0],loc[1],height);}
     private void showRepeatGridPopup(View anchor,String[] items,int cell,int height){int[] loc=popupLocation(anchor);dismissPopup();ScrollView sv=scrollBox();addRepeatGrid(gridContainer(sv),items,cell);activePopup=new PopupWindow(sv,dp(330),dp(height),true);stylePopup(activePopup);showPopupAt(activePopup,loc[0],loc[1],height);}
-    private void addRepeatGrid(LinearLayout box,String[] items,int cell){LinearLayout r=null;int count=0;for(String item:items){if(count%7==0){r=new LinearLayout(this);r.setOrientation(LinearLayout.HORIZONTAL);box.addView(r,new LinearLayout.LayoutParams(-1,dp(cell)));}Button b=key(item,20,NAVY,CREAM);r.addView(b,weight(1));b.setOnClickListener(v->commit(((Button)v).getText().toString()));addMarkRepeat(b,item);count++;}}
+    private void addRepeatGrid(LinearLayout box,String[] items,int cell){LinearLayout r=null;int count=0;for(String item:items){if(count%7==0){r=new LinearLayout(this);r.setOrientation(LinearLayout.HORIZONTAL);box.addView(r,new LinearLayout.LayoutParams(-1,dp(cell)));}final String shown=decodeSymbol(item);Button b=key(shown,20,NAVY,CREAM);r.addView(b,weight(1));b.setOnClickListener(v->commit(decodeSymbol(((Button)v).getText().toString())));addMarkRepeat(b,shown);count++;}}
     private void stylePopup(PopupWindow pw){pw.setBackgroundDrawable(new ColorDrawable(CREAM));pw.setOutsideTouchable(true);pw.setFocusable(true);pw.setInputMethodMode(PopupWindow.INPUT_METHOD_NOT_NEEDED);pw.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);pw.setElevation(dp(8));pw.setTouchInterceptor((v,e)->false);}
     private int[] popupLocation(View anchor){int[] loc=new int[2];anchor.getLocationOnScreen(loc);return loc;}
     private void showPopupAbove(View anchor,PopupWindow pw,int height){int[] loc=popupLocation(anchor);showPopupAt(pw,loc[0],loc[1],height);}
@@ -220,27 +245,8 @@ public class FastKeyboardService extends InputMethodService {
         private final Map<String,Map<String,Integer>> next=new HashMap<>();
         private final Map<String,Integer> common=new LinkedHashMap<>();
         Predictor(){
-            seed("شب","و",60); seed("شب","روز",45); seed("شب","خوب",30);
-            seed("کتاب","را",45); seed("کتاب","خواندم",35); seed("کتاب","خوبی",18);
-            seed("صبح","بخیر",55); seed("صبح","امروز",25); seed("امروز","روز",40); seed("امروز","هوا",30);
-            seed("هوا","خوب",50); seed("هوا","سرد",28); seed("حال","شما",45); seed("حال","خوب",40);
-            seed("چه","خبر",30); seed("چه","کار",28); seed("کجا","هستید",35); seed("چرا","این",25);
-            seed("آیا","شما",45); seed("من","به",30); seed("من","می",28); seed("ما","به",32);
         }
         void seed(String a,String b,int n){next.computeIfAbsent(a,k->new HashMap<>()).put(b,n);}
-        void loadBuiltIn(Context context){
-            loadDictionary(context,"suggestions_fa.txt");
-            loadDictionary(context,"suggestions_en.txt");
-        }
-        private void loadDictionary(Context context,String assetName){
-            try(BufferedReader br=new BufferedReader(new InputStreamReader(context.getAssets().open(assetName),"UTF-8"))){
-                String w;
-                while((w=br.readLine())!=null){
-                    w=w.trim();
-                    if(!w.isEmpty()) common.putIfAbsent(w,1);
-                }
-            }catch(Exception ignored){}
-        }
         void observeWord(String w){ common.put(w,common.getOrDefault(w,0)+1); }
         void observePunctuation(String p){}
         void learnFromContext(String text){
